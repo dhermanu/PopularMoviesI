@@ -1,4 +1,4 @@
-# PopularMoviesI
+# Popular Movies - Stage I
 
 This app will display top rated movies and popular movies. I made this app as part of the Android Nanodegree program by Udacity.
 
