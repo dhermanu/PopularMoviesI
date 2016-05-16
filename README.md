@@ -10,5 +10,5 @@ This app will display top rated movies and popular movies. I made this app as pa
 
 Library used: [Picasso](http://square.github.io/picasso/)
 # Note
-Replace YOUR_MOVIEDB_APIKEY at gradle with your own MOVIEDB API key to work with the source code
+Replace YOUR_MOVIEDB_APIKEY at gradle with your own MOVIEDB API key to work with the source code.
 
