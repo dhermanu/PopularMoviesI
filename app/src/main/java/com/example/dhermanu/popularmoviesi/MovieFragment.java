@@ -41,26 +41,14 @@ public class MovieFragment extends Fragment {
     private ArrayList<Movie> movieListSaved = null;
 
     // intent extras to pass in to the next activity
+    public final static String EXTRA_DATA =
+            "com.example.dhermanu.popularmoviesi.EXTRA_DATA";
     public final static String EXTRA_STATE =
             "com.example.dhermanu.popularmoviesi.EXTRA_STATE";
-    public final static String EXTRA_TITLE =
-            "com.example.dhermanu.popularmoviesi.EXTRA_TITLE";
-    public final static String EXTRA_OVERVIEW =
-            "com.example.dhermanu.popularmoviesi.EXTRA_OVERVIEW";
-    public final static String EXTRA_POSTER =
-            "com.example.dhermanu.popularmoviesi.EXTRA_POSTER";
-    public final static String EXTRA_RATING =
-            "com.example.dhermanu.popularmoviesi.EXTRA_RATING";
-    public final static String EXTRA_RELEASEDATE =
-            "com.example.dhermanu.popularmoviesi.EXTRA_RELEASEDATE";
-
     public final static String SAVED_STATE =
             "com.example.dhermanu.popularmoviesi.SAVED_STATE";
     public final static String SAVED_MOVIES =
             "com.example.dhermanu.popularmoviesi.SAVED_MOVIES";
-
-
-
 
     public MovieFragment() {
     }
@@ -88,14 +76,8 @@ public class MovieFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movieSelected = (Movie) movieListAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
-                Bundle extras = new Bundle();
-                extras.putString(EXTRA_TITLE, movieSelected.getTitle());
-                extras.putString(EXTRA_OVERVIEW, movieSelected.getOverview());
-                extras.putString(EXTRA_POSTER, movieSelected.getPoster());
-                extras.putString(EXTRA_RELEASEDATE, movieSelected.getReleasedate());
-                extras.putInt(EXTRA_RATING, movieSelected.getRating());
-                extras.putString(EXTRA_STATE, SORT_MOVIES_BY);
-                intent.putExtras(extras);
+                intent.putExtra(EXTRA_DATA, movieSelected);
+                intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
                 startActivity(intent);
             }
         });
@@ -236,7 +218,7 @@ public class MovieFragment extends Fragment {
                 StringBuffer buffer = new StringBuffer();
                 if (inputStream == null) {
                     // Nothing to do.
-                    movieJsonStr = null;
+                    return null;
                 }
                 reader = new BufferedReader(new InputStreamReader(inputStream));
 
@@ -250,7 +232,7 @@ public class MovieFragment extends Fragment {
 
                 if (buffer.length() == 0) {
                     // Stream was empty.  No point in parsing.
-                    movieJsonStr = null;
+                    return null;
                 }
                 movieJsonStr = buffer.toString();
             }
@@ -258,7 +240,7 @@ public class MovieFragment extends Fragment {
             catch (IOException e) {
                 // If the code didn't successfully get the weather data, there's no point in attempting
                 // to parse it.
-                movieJsonStr = null;
+                return null;
             }
 
             finally{

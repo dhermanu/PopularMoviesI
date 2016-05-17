@@ -19,6 +19,9 @@ public class DetailActivity extends AppCompatActivity {
     private String save_sort_state;
     public final static String EXTRA_STATE =
             "com.example.dhermanu.popularmoviesi.EXTRA_STATE";
+    public final static String EXTRA_DATA =
+            "com.example.dhermanu.popularmoviesi.EXTRA_DATA";
+
     public final static String EXTRA_TITLE =
             "com.example.dhermanu.popularmoviesi.EXTRA_TITLE";
     public final static String EXTRA_OVERVIEW =
@@ -85,12 +88,12 @@ public class DetailActivity extends AppCompatActivity {
             movie_rating = (TextView) rootView.findViewById(R.id.movieRating);
 
             Intent intent  = getActivity().getIntent();
-            Bundle extras = intent.getExtras();
-            movieTitle = extras.getString(EXTRA_TITLE);
-            moviePoster = extras.getString(EXTRA_POSTER);
-            movieOverview = extras.getString(EXTRA_OVERVIEW);
-            movieRelease = extras.getString(EXTRA_RELEASEDATE);
-            movieRating = extras.getInt(EXTRA_RATING);
+            Movie movie = intent.getParcelableExtra(EXTRA_DATA);
+            movieTitle = movie.getTitle();
+            moviePoster = movie.getPoster();
+            movieOverview = movie.getOverview();
+            movieRelease = movie.getReleasedate();
+            movieRating = movie.getRating();
 
             //update images and texts
             movie_title.setText(movieTitle);
