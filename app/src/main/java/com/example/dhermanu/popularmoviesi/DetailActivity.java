@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.dhermanu.popularmoviesi.Model.Result;
 import com.squareup.picasso.Picasso;
 
 public class DetailActivity extends AppCompatActivity {
@@ -69,7 +70,7 @@ public class DetailActivity extends AppCompatActivity {
     public static class DetailActivityFragment extends Fragment {
 
         private String movieTitle, moviePoster, movieOverview, movieRelease;
-        private int movieRating;
+        private Double movieRating;
 
         private TextView movie_title, movie_overview, movie_release, movie_rating;
         private ImageView movie_poster;
@@ -88,18 +89,18 @@ public class DetailActivity extends AppCompatActivity {
             movie_rating = (TextView) rootView.findViewById(R.id.movieRating);
 
             Intent intent  = getActivity().getIntent();
-            Movie movie = intent.getParcelableExtra(EXTRA_DATA);
+            Result movie = intent.getParcelableExtra(EXTRA_DATA);
             movieTitle = movie.getTitle();
-            moviePoster = movie.getPoster();
+            moviePoster = movie.getPosterPath();
             movieOverview = movie.getOverview();
-            movieRelease = movie.getReleasedate();
-            movieRating = movie.getRating();
+            movieRelease = movie.getReleaseDate();
+            movieRating = movie.getVoteAverage();
 
             //update images and texts
             movie_title.setText(movieTitle);
             movie_overview.setText(movieOverview);
             movie_release.setText(movieRelease);
-            movie_rating.setText(Integer.toString(movieRating));
+            movie_rating.setText(Double.toString(movieRating));
 
             String imageURL = "http://image.tmdb.org/t/p/w185/" + moviePoster;
 

@@ -1,12 +1,9 @@
 package com.example.dhermanu.popularmoviesi;
 
 import android.content.Intent;
-import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -22,16 +19,6 @@ import com.example.dhermanu.popularmoviesi.Model.Result;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +38,7 @@ public class MovieFragment extends Fragment {
     private MovieAPI movieAPI;
 
     private Menu optionsMenu;
-    private ArrayList<Movie> movieListSaved = null;
+    private ArrayList<Result> movieListSaved = null;
 
     // intent extras to pass in to the next activity
     public final static String EXTRA_DATA =
@@ -86,33 +73,7 @@ public class MovieFragment extends Fragment {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-               /* Result movieSelected = (Result) movieListAdapter.getItem(position);
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra(EXTRA_DATA, movieSelected);
-                intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
-                startActivity(intent);*/
-            }
-        });
-
-
-
-        /*Intent intent = getActivity().getIntent();
-        Bundle extras = intent.getExtras();
-
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
-            SORT_MOVIES_BY = extras.getString(EXTRA_STATE);
-        }
-
-        else
-           SORT_MOVIES_BY = POPULAR_MOVIES;
-
-        GridView gridView = (GridView) rootview.findViewById(R.id.grid_view_movies);
-        movieListAdapter = new MovieAdapter(getActivity(), new ArrayList<Movie>());
-        gridView.setAdapter(movieListAdapter);
-        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Movie movieSelected = (Movie) movieListAdapter.getItem(position);
+                Result movieSelected = (Result) movieListAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
                 intent.putExtra(EXTRA_DATA, movieSelected);
                 intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
@@ -131,7 +92,7 @@ public class MovieFragment extends Fragment {
 
         // execute network operation
         else
-            updateMovies(SORT_MOVIES_BY);*/
+            updateMovies(SORT_MOVIES_BY);
 
         updateMovies(SORT_MOVIES_BY);
 
@@ -217,139 +178,19 @@ public class MovieFragment extends Fragment {
 
                 if(test != null)
                 {
+                    movieListSaved = new ArrayList<>();
                     movieListAdapter.clear();
                     for (Result res :  test) {
                         movieListAdapter.add(res);
+                        movieListSaved.add(res);
                     }
                 }
-
             }
 
             @Override
             public void onFailure(Call<MovieData> call, Throwable t) {
-                Log.v("HELOOO", "UUUUUUH");
+
             }
         });
-    }
-
-    //fetch movies task
-    public class FetchMovieTask extends AsyncTask<String, Void, List<Movie>> {
-
-        private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
-
-        private List<Movie> getMoviesDataFromJson(String movieDataStr) throws JSONException{
-
-            final String OWM_RESULT = "results";
-
-            JSONObject jsonMovieObj = new JSONObject(movieDataStr);
-            JSONArray jsonMovieArr = jsonMovieObj.getJSONArray(OWM_RESULT);
-
-            List<Movie> listMovie = new ArrayList<>();
-            for(int i = 0; i < jsonMovieArr.length(); i++){
-                JSONObject getMovieDesc = jsonMovieArr.getJSONObject(i);
-                Movie parseMovieModel = new Movie(getMovieDesc);
-                listMovie.add(parseMovieModel);
-            }
-
-            return listMovie;
-        }
-
-        @Override
-        protected List<Movie> doInBackground(String... voids) {
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String movieJsonStr = null;
-
-            try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are available at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
-                final String BASE_URL = "http://api.themoviedb.org/3/movie";
-
-                Uri builtUri = Uri.parse(BASE_URL).buildUpon()
-                        .appendPath(voids[0])
-                        .appendQueryParameter("api_key", BuildConfig.MOVIEDB_API_KEY)
-                        .build();
-                URL url = new URL(builtUri.toString());
-
-                // Create the request to OpenWeatherMap, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                movieJsonStr = buffer.toString();
-            }
-
-            catch (IOException e) {
-                // If the code didn't successfully get the weather data, there's no point in attempting
-                // to parse it.
-                return null;
-            }
-
-            finally{
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
-                    }
-                }
-            }
-
-            try {
-                return getMoviesDataFromJson(movieJsonStr);
-            }
-            catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-
-            Log.v(LOG_TAG, movieJsonStr);
-
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-            super.onPostExecute(movies);
-            if (movies != null) {
-                movieListAdapter.clear();
-                movieListSaved = new ArrayList<>();
-                if (movieListAdapter != null) {
-                    for(Movie movie : movies) {
-                        movieListAdapter.add(movie);
-                       // movieListSaved.add(movie); // save movies to restore state
-                    }
-                }
-            }
-
-        }
     }
 }

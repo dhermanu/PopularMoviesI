@@ -13,5 +13,4 @@ import retrofit2.http.Path;
 public interface MovieAPI {
     @GET("movie/{sort}?api_key=" + BuildConfig.MOVIEDB_API_KEY)
     Call<MovieData> getSortMovies(@Path("sort") String sort_by);
-
 }
