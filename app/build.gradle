@@ -19,7 +19,7 @@ android {
     }
 
     buildTypes.each {
-        it.buildConfigField 'String', 'MOVIEDB_API_KEY', "\"YOUR_MOVIEDB_APIKEY\""
+        it.buildConfigField 'String', 'MOVIEDB_API_KEY', "\"0b0cdb83c39c95dab0205966ed073da9\""
     }
 }
 
@@ -29,4 +29,8 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.2.1'
     compile 'com.android.support:design:23.2.1'
     compile 'com.squareup.picasso:picasso:2.5.2'
+    compile 'com.squareup.retrofit2:retrofit:2.0.2'
+    compile 'com.squareup.retrofit2:converter-gson:2.0.2'
+    compile 'com.google.code.gson:gson:2.6.2'
+    provided 'org.glassfish:javax.annotation:10.0-b28'
 }

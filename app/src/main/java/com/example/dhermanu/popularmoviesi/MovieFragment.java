@@ -16,6 +16,12 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
+import com.example.dhermanu.popularmoviesi.Interface.MovieAPI;
+import com.example.dhermanu.popularmoviesi.Model.MovieData;
+import com.example.dhermanu.popularmoviesi.Model.Result;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,6 +35,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
 public class MovieFragment extends Fragment {
 
     private MovieAdapter movieListAdapter;
@@ -36,6 +48,7 @@ public class MovieFragment extends Fragment {
     private String POPULAR_MOVIES = "popular";
     private String TOP_RATED_MOVIES = "top_rated";
     private String SORT_MOVIES_BY;
+    private MovieAPI movieAPI;
 
     private Menu optionsMenu;
     private ArrayList<Movie> movieListSaved = null;
@@ -59,6 +72,31 @@ public class MovieFragment extends Fragment {
         View rootview = inflater.inflate(R.layout.fragment_main, container, false);
 
         Intent intent = getActivity().getIntent();
+        Bundle extras = intent.getExtras();
+
+        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
+            SORT_MOVIES_BY = extras.getString(EXTRA_STATE);
+        }
+        else
+            SORT_MOVIES_BY = POPULAR_MOVIES;
+
+        GridView gridView = (GridView) rootview.findViewById(R.id.grid_view_movies);
+        movieListAdapter = new MovieAdapter(getActivity(), new ArrayList<Result>());
+        gridView.setAdapter(movieListAdapter);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+               /* Result movieSelected = (Result) movieListAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra(EXTRA_DATA, movieSelected);
+                intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
+                startActivity(intent);*/
+            }
+        });
+
+
+
+        /*Intent intent = getActivity().getIntent();
         Bundle extras = intent.getExtras();
 
         if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
@@ -93,7 +131,9 @@ public class MovieFragment extends Fragment {
 
         // execute network operation
         else
-            updateMovies(SORT_MOVIES_BY);
+            updateMovies(SORT_MOVIES_BY);*/
+
+        updateMovies(SORT_MOVIES_BY);
 
         return rootview;
     }
@@ -160,8 +200,36 @@ public class MovieFragment extends Fragment {
 
     // start connection
     private void updateMovies(String sortBy){
-        FetchMovieTask movieTask = new FetchMovieTask();
-        movieTask.execute(sortBy);
+        final String BASE_URL = "http://api.themoviedb.org/3/";
+        Gson gson =  new GsonBuilder().create();
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+
+        movieAPI = retrofit.create(MovieAPI.class);
+
+        Call<MovieData> movieDataCall = movieAPI.getSortMovies(sortBy);
+
+        movieDataCall.enqueue(new Callback<MovieData>() {
+            @Override
+            public void onResponse(Call<MovieData> call, Response<MovieData> response) {
+                List<Result> test = response.body().getResults();
+
+                if(test != null)
+                {
+                    movieListAdapter.clear();
+                    for (Result res :  test) {
+                        movieListAdapter.add(res);
+                    }
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call<MovieData> call, Throwable t) {
+                Log.v("HELOOO", "UUUUUUH");
+            }
+        });
     }
 
     //fetch movies task
@@ -277,7 +345,7 @@ public class MovieFragment extends Fragment {
                 if (movieListAdapter != null) {
                     for(Movie movie : movies) {
                         movieListAdapter.add(movie);
-                        movieListSaved.add(movie); // save movies to restore state
+                       // movieListSaved.add(movie); // save movies to restore state
                     }
                 }
             }

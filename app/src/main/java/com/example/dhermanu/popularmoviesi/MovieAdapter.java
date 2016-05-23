@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
+import com.example.dhermanu.popularmoviesi.Model.Result;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -21,15 +22,15 @@ public class MovieAdapter extends ArrayAdapter {
     private LayoutInflater inflater;
 
 
-    public MovieAdapter(Context context, ArrayList<Movie> imageURL) {
+    public MovieAdapter(Context context, ArrayList<Result> imageURL) {
         super(context, R.layout.list_image_view,imageURL);
         this.context = context;
         inflater = LayoutInflater.from(context);
     }
 
-    public void addList(List<Movie> movieList){
+    public void addList(List<Result> movieList){
         clear();
-        for(Movie movies : movieList){
+        for(Result movies : movieList){
             add(movies);
         }
     }
@@ -40,8 +41,8 @@ public class MovieAdapter extends ArrayAdapter {
             convertView = inflater.inflate(R.layout.list_image_view, parent, false);
         }
 
-        final Movie movie = (Movie) getItem(position);
-        String image_url = "http://image.tmdb.org/t/p/w185" + movie.getPoster();
+        final Result movie = (Result) getItem(position);
+        String image_url = "http://image.tmdb.org/t/p/w185" + movie.getPosterPath();
 
         Picasso
                 .with(context)
