@@ -13,7 +13,7 @@ import java.util.List;
 import javax.annotation.Generated;
 
 @Generated("org.jsonschema2pojo")
-public class Result implements Parcelable {
+public class Movie implements Parcelable {
 
     @SerializedName("poster_path")
     @Expose
@@ -309,19 +309,19 @@ public class Result implements Parcelable {
     public void setVoteAverage(Double voteAverage) {
         this.voteAverage = voteAverage;
     }
-    public static final Creator<Result> CREATOR = new Creator<Result>() {
+    public static final Creator<Movie> CREATOR = new Creator<Movie>() {
         @Override
-        public Result createFromParcel(Parcel in) {
-            return new Result(in);
+        public Movie createFromParcel(Parcel in) {
+            return new Movie(in);
         }
 
         @Override
-        public Result[] newArray(int size) {
-            return new Result[size];
+        public Movie[] newArray(int size) {
+            return new Movie[size];
         }
     };
 
-    protected Result(Parcel in) {
+    protected Movie(Parcel in) {
         id = in.readInt();
         title = in.readString();
         posterPath = in.readString();

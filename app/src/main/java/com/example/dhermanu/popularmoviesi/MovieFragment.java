@@ -14,8 +14,8 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 
 import com.example.dhermanu.popularmoviesi.Interface.MovieAPI;
-import com.example.dhermanu.popularmoviesi.Model.MovieData;
-import com.example.dhermanu.popularmoviesi.Model.Result;
+import com.example.dhermanu.popularmoviesi.Model.MovieList;
+import com.example.dhermanu.popularmoviesi.Model.Movie;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -38,7 +38,7 @@ public class MovieFragment extends Fragment {
     private MovieAPI movieAPI;
 
     private Menu optionsMenu;
-    private ArrayList<Result> movieListSaved = null;
+    private ArrayList<Movie> movieListSaved = null;
 
     // intent extras to pass in to the next activity
     public final static String EXTRA_DATA =
@@ -68,12 +68,12 @@ public class MovieFragment extends Fragment {
             SORT_MOVIES_BY = POPULAR_MOVIES;
 
         GridView gridView = (GridView) rootview.findViewById(R.id.grid_view_movies);
-        movieListAdapter = new MovieAdapter(getActivity(), new ArrayList<Result>());
+        movieListAdapter = new MovieAdapter(getActivity(), new ArrayList<Movie>());
         gridView.setAdapter(movieListAdapter);
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Result movieSelected = (Result) movieListAdapter.getItem(position);
+                Movie movieSelected = (Movie) movieListAdapter.getItem(position);
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
                 intent.putExtra(EXTRA_DATA, movieSelected);
                 intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
@@ -169,26 +169,26 @@ public class MovieFragment extends Fragment {
 
         movieAPI = retrofit.create(MovieAPI.class);
 
-        Call<MovieData> movieDataCall = movieAPI.getSortMovies(sortBy);
+        Call<MovieList> movieListCall = movieAPI.getSortMovies(sortBy);
 
-        movieDataCall.enqueue(new Callback<MovieData>() {
+        movieListCall.enqueue(new Callback<MovieList>() {
             @Override
-            public void onResponse(Call<MovieData> call, Response<MovieData> response) {
-                List<Result> test = response.body().getResults();
+            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
+                List<Movie> movieList = response.body().getResults();
 
-                if(test != null)
+                if(movieList != null)
                 {
                     movieListSaved = new ArrayList<>();
                     movieListAdapter.clear();
-                    for (Result res :  test) {
-                        movieListAdapter.add(res);
-                        movieListSaved.add(res);
+                    for (Movie movie :  movieList) {
+                        movieListAdapter.add(movie);
+                        movieListSaved.add(movie);
                     }
                 }
             }
 
             @Override
-            public void onFailure(Call<MovieData> call, Throwable t) {
+            public void onFailure(Call<MovieList> call, Throwable t) {
 
             }
         });
