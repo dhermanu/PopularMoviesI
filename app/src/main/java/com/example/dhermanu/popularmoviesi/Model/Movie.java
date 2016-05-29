@@ -328,6 +328,7 @@ public class Movie implements Parcelable {
         overview = in.readString();
         releaseDate = in.readString();
         voteAverage = in.readDouble();
+        backdropPath = in.readString();
     }
 
     @Override
@@ -343,5 +344,6 @@ public class Movie implements Parcelable {
         parcel.writeString(overview);
         parcel.writeString(releaseDate);
         parcel.writeDouble(voteAverage);
+        parcel.writeString(backdropPath);
     }
 }

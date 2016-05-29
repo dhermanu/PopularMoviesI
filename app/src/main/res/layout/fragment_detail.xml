@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:value="com.example.android.sunshine.app.DetailActivityFragment"
-    android:fillViewport="true">
+    android:fillViewport="true">z
 
 
     <LinearLayout
@@ -87,14 +87,13 @@
         <android.support.v7.widget.CardView
             xmlns:card_view="http://schemas.android.com/apk/res-auto"
             android:id="@+id/card_view"
-            android:layout_marginTop="@dimen/layout_margin"
             android:layout_marginStart="@dimen/layout_margin"
             android:layout_marginLeft="@dimen/layout_margin"
             android:layout_marginEnd="@dimen/layout_margin"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            card_view:cardCornerRadius="0dp">
-
+            card_view:cardCornerRadius="0dp"
+            >
             <TextView
                 android:id="@+id/movieOverview"
                 android:layout_marginTop="@dimen/layout_margin"
