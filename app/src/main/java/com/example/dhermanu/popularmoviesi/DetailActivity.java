@@ -18,7 +18,6 @@ public class DetailActivity extends AppCompatActivity {
 
         Intent intent  = getIntent();
         save_sort_state = intent.getStringExtra(EXTRA_STATE);
-
     }
 
     @Override

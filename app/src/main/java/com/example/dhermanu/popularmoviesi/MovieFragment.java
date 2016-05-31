@@ -1,6 +1,7 @@
 package com.example.dhermanu.popularmoviesi;
 
-import android.content.Intent;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -14,13 +15,14 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 
 import com.example.dhermanu.popularmoviesi.Interface.MovieAPI;
-import com.example.dhermanu.popularmoviesi.Model.MovieList;
 import com.example.dhermanu.popularmoviesi.Model.Movie;
+import com.example.dhermanu.popularmoviesi.Model.MovieList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -34,6 +36,8 @@ public class MovieFragment extends Fragment {
 
     private String POPULAR_MOVIES = "popular";
     private String TOP_RATED_MOVIES = "top_rated";
+    private String FAVORITE_MOVIES = "favorite";
+
     private String SORT_MOVIES_BY;
     private MovieAPI movieAPI;
 
@@ -50,6 +54,13 @@ public class MovieFragment extends Fragment {
     public final static String SAVED_MOVIES =
             "com.example.dhermanu.popularmoviesi.SAVED_MOVIES";
 
+    public interface CallbackTablet {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(Movie movie);
+    }
+
     public MovieFragment() {
     }
 
@@ -58,14 +69,8 @@ public class MovieFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootview = inflater.inflate(R.layout.fragment_main, container, false);
 
-        Intent intent = getActivity().getIntent();
-        Bundle extras = intent.getExtras();
 
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
-            SORT_MOVIES_BY = extras.getString(EXTRA_STATE);
-        }
-        else
-            SORT_MOVIES_BY = POPULAR_MOVIES;
+        SORT_MOVIES_BY = POPULAR_MOVIES;
 
         GridView gridView = (GridView) rootview.findViewById(R.id.grid_view_movies);
         movieListAdapter = new MovieAdapter(getActivity(), new ArrayList<Movie>());
@@ -74,10 +79,8 @@ public class MovieFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movieSelected = (Movie) movieListAdapter.getItem(position);
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra(EXTRA_DATA, movieSelected);
-                intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
-                startActivity(intent);
+                ((CallbackTablet)getActivity()).onItemSelected(movieSelected);
+
             }
         });
 
@@ -128,6 +131,13 @@ public class MovieFragment extends Fragment {
         }
     }
     @Override
+    public void onResume() {
+        super.onResume();
+        if(SORT_MOVIES_BY.equals(FAVORITE_MOVIES))
+           updateMovies(SORT_MOVIES_BY);
+    }
+
+    @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
@@ -135,6 +145,8 @@ public class MovieFragment extends Fragment {
            menu.findItem(R.id.action_popular).setChecked(true);
         else if(SORT_MOVIES_BY.equals(TOP_RATED_MOVIES))
             menu.findItem(R.id.action_toprated).setChecked(true);
+        else if(SORT_MOVIES_BY.equals(FAVORITE_MOVIES))
+            menu.findItem(R.id.action_favorite).setChecked(true);
 
     }
 
@@ -156,41 +168,68 @@ public class MovieFragment extends Fragment {
             item.setChecked(true);
             return true;
         }
+        if (id == R.id.action_favorite) {
+            SORT_MOVIES_BY = FAVORITE_MOVIES;
+            updateMovies(FAVORITE_MOVIES);
+            item.setChecked(true);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
-
     // start connection
     private void updateMovies(String sortBy){
-        final String BASE_URL = "http://api.themoviedb.org/3/";
-        Gson gson =  new GsonBuilder().create();
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
+        if(!sortBy.equals(FAVORITE_MOVIES)){
+            final String BASE_URL = "http://api.themoviedb.org/3/";
+            Gson gson =  new GsonBuilder().create();
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .build();
 
-        movieAPI = retrofit.create(MovieAPI.class);
+            movieAPI = retrofit.create(MovieAPI.class);
 
-        Call<MovieList> movieListCall = movieAPI.getSortMovies(sortBy);
+            Call<MovieList> movieListCall = movieAPI.getSortMovies(sortBy);
 
-        movieListCall.enqueue(new Callback<MovieList>() {
-            @Override
-            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
-                List<Movie> movieList = response.body().getResults();
+            movieListCall.enqueue(new Callback<MovieList>() {
+                @Override
+                public void onResponse(Call<MovieList> call, Response<MovieList> response) {
+                    List<Movie> movieList = response.body().getResults();
 
-                if(movieList != null)
-                {
-                    movieListSaved = new ArrayList<>();
-                    movieListAdapter.clear();
-                    for (Movie movie :  movieList) {
-                        movieListAdapter.add(movie);
-                        movieListSaved.add(movie);
+                    if(movieList != null)
+                    {
+                        movieListSaved = new ArrayList<>();
+                        movieListAdapter.clear();
+                        for (Movie movie :  movieList) {
+                            movieListAdapter.add(movie);
+                            movieListSaved.add(movie);
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onFailure(Call<MovieList> call, Throwable t) {
+                @Override
+                public void onFailure(Call<MovieList> call, Throwable t) {
 
+                }
+            });
+        }
+
+        else{
+            SharedPreferences sharedPreferences
+                    = getActivity().getSharedPreferences("FavMovie", Context.MODE_PRIVATE);
+
+            Map<String, ?> allEntries = sharedPreferences.getAll();
+            Gson gson = new Gson();
+
+            movieListSaved = new ArrayList<>();
+            movieListAdapter.clear();
+            String json;
+            Movie movie;
+
+            for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+                json = entry.getValue().toString();
+                movie = gson.fromJson(json, Movie.class);
+                movieListAdapter.add(movie);
+                movieListSaved.add(movie);
             }
-        });
+        }
     }
 }

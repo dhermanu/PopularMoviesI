@@ -1,8 +1,11 @@
 package com.example.dhermanu.popularmoviesi;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,6 +17,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.dhermanu.popularmoviesi.Interface.MovieAPI;
 import com.example.dhermanu.popularmoviesi.Model.Movie;
@@ -43,6 +47,11 @@ public class DetailActivityFragment extends Fragment {
 
     public final static String EXTRA_DATA =
             "com.example.dhermanu.popularmoviesi.EXTRA_DATA";
+    public final static String EXTRA_STATE =
+            "com.example.dhermanu.popularmoviesi.EXTRA_STATE";
+
+    private String save_sort_state;
+
     public final static String BASE_URL = "http://api.themoviedb.org/3/";
     public final static String TRAILER_TYPE = "videos";
     public final static String REVIEW_TYPE = "review";
@@ -56,6 +65,9 @@ public class DetailActivityFragment extends Fragment {
     private String movieTitle, moviePoster, movieOverview, movieRelease;
     private Double movieRating;
     private MovieAPI movieAPI;
+    private boolean mFavMovie = false;
+
+    private FloatingActionButton fab;
 
     private TextView movie_title, movie_overview, movie_release, movie_rating,
             movie_review, review_author;
@@ -75,15 +87,27 @@ public class DetailActivityFragment extends Fragment {
         CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsingtoolbar);
 
         Intent intent  = getActivity().getIntent();
-        Movie movie = intent.getParcelableExtra(EXTRA_DATA);
+        Bundle args = getArguments();
+
+        if(rootView.findViewById(R.id.nested_view) != null){
+            Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
+
+            ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+
+        final Movie movie = args.getParcelable(EXTRA_DATA);
 
         final CollapsingToolbarLayout templayout = collapsingToolbarLayout;
+        save_sort_state = intent.getStringExtra(EXTRA_STATE);
+
         setDetailLayout(movie, rootView);
         collapsingToolbarLayout = templayout;
         collapsingToolbarLayout.setTitle(movieTitle);
-        Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
-        ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
-        ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        fab = (FloatingActionButton) rootView.findViewById(R.id.favorite_fab);
+
 
         getReviewTrailer(TRAILER_TYPE, movie.getId().toString());
         getReviewTrailer(REVIEW_TYPE, movie.getId().toString());
@@ -91,10 +115,73 @@ public class DetailActivityFragment extends Fragment {
         rvTrailer = (RecyclerView) rootView.findViewById(R.id.recycle_movie);
         rvTrailer.setLayoutManager(new LinearLayoutManager(getActivity()));
 
+        SharedPreferences sharedPreferences
+                = getActivity().getSharedPreferences("CheckFav", Context.MODE_PRIVATE);
+
+        if(sharedPreferences.contains(movie.getId().toString())){
+            fab.setImageResource(R.drawable.ic_favorite_white_24dp);
+            mFavMovie = true;
+         }
+
+        fab.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                if(mFavMovie){
+                    fab.setImageResource(R.drawable.ic_favorite_border_white_24dp);
+                    Toast.makeText
+                            (getActivity(), "Movie removed from favorites", Toast.LENGTH_SHORT)
+                            .show();
+                    removeFavorite(movie);
+                    mFavMovie = false;
+                }
+
+                else{
+                    fab.setImageResource(R.drawable.ic_favorite_white_24dp);
+                    Toast.makeText
+                            (getActivity(), "Movie saved to favorites", Toast.LENGTH_SHORT)
+                            .show();
+                    saveFavorite(movie);
+                    mFavMovie = true;
+                }
+            }
+        });
 
         return rootView;
     }
 
+    public void saveFavorite(Movie movie){
+        SharedPreferences sharedPreferences
+                = getActivity().getSharedPreferences("FavMovie", Context.MODE_PRIVATE);
+        SharedPreferences pref
+                = getActivity().getSharedPreferences("CheckFav", Context.MODE_PRIVATE);
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(movie);
+
+        editor.putString(movie.getId().toString(), json);
+        editor.commit();
+
+        SharedPreferences.Editor editList = pref.edit();
+        editList.putBoolean(movie.getId().toString(), true);
+        editList.commit();
+    }
+
+    public void removeFavorite(Movie movie){
+        SharedPreferences sharedPreferences
+                = getActivity().getSharedPreferences("FavMovie", Context.MODE_PRIVATE);
+        SharedPreferences pref
+                = getActivity().getSharedPreferences("CheckFav", Context.MODE_PRIVATE);
+
+        String key = movie.getId().toString();
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove(key);
+        editor.commit();
+
+        SharedPreferences.Editor editList = pref.edit();
+        editList.remove(key);
+        editList.commit();
+    }
 
     public void setDetailLayout(Movie movie, View view){
         movie_title = (TextView) view.findViewById(R.id.movieTitle);
@@ -129,6 +216,7 @@ public class DetailActivityFragment extends Fragment {
                 .into(movie_banner);
     }
 
+
     public void getReviewTrailer(String getType, String id){
         Gson gson =  new GsonBuilder().create();
         Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL)
@@ -149,8 +237,6 @@ public class DetailActivityFragment extends Fragment {
                     }
                     else
                         review_author.setText("No reviews yet for this movie.");
-
-
                 }
 
                 @Override
