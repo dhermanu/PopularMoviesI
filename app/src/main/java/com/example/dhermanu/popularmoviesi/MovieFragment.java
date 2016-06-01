@@ -1,12 +1,10 @@
 package com.example.dhermanu.popularmoviesi;
 
-import android.content.Intent;
-import android.net.Uri;
-import android.os.AsyncTask;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,18 +14,21 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.example.dhermanu.popularmoviesi.Interface.MovieAPI;
+import com.example.dhermanu.popularmoviesi.Model.Movie;
+import com.example.dhermanu.popularmoviesi.Model.MovieList;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MovieFragment extends Fragment {
 
@@ -35,7 +36,10 @@ public class MovieFragment extends Fragment {
 
     private String POPULAR_MOVIES = "popular";
     private String TOP_RATED_MOVIES = "top_rated";
+    private String FAVORITE_MOVIES = "favorite";
+
     private String SORT_MOVIES_BY;
+    private MovieAPI movieAPI;
 
     private Menu optionsMenu;
     private ArrayList<Movie> movieListSaved = null;
@@ -50,6 +54,13 @@ public class MovieFragment extends Fragment {
     public final static String SAVED_MOVIES =
             "com.example.dhermanu.popularmoviesi.SAVED_MOVIES";
 
+    public interface CallbackTablet {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(Movie movie);
+    }
+
     public MovieFragment() {
     }
 
@@ -58,15 +69,8 @@ public class MovieFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootview = inflater.inflate(R.layout.fragment_main, container, false);
 
-        Intent intent = getActivity().getIntent();
-        Bundle extras = intent.getExtras();
 
-        if (intent != null && intent.hasExtra(Intent.EXTRA_TEXT)){
-            SORT_MOVIES_BY = extras.getString(EXTRA_STATE);
-        }
-
-        else
-           SORT_MOVIES_BY = POPULAR_MOVIES;
+        SORT_MOVIES_BY = POPULAR_MOVIES;
 
         GridView gridView = (GridView) rootview.findViewById(R.id.grid_view_movies);
         movieListAdapter = new MovieAdapter(getActivity(), new ArrayList<Movie>());
@@ -75,10 +79,8 @@ public class MovieFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movieSelected = (Movie) movieListAdapter.getItem(position);
-                Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra(EXTRA_DATA, movieSelected);
-                intent.putExtra(EXTRA_STATE, SORT_MOVIES_BY);
-                startActivity(intent);
+                ((CallbackTablet)getActivity()).onItemSelected(movieSelected);
+
             }
         });
 
@@ -94,6 +96,8 @@ public class MovieFragment extends Fragment {
         // execute network operation
         else
             updateMovies(SORT_MOVIES_BY);
+
+        updateMovies(SORT_MOVIES_BY);
 
         return rootview;
     }
@@ -127,6 +131,13 @@ public class MovieFragment extends Fragment {
         }
     }
     @Override
+    public void onResume() {
+        super.onResume();
+        if(SORT_MOVIES_BY.equals(FAVORITE_MOVIES))
+           updateMovies(SORT_MOVIES_BY);
+    }
+
+    @Override
     public void onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
 
@@ -134,6 +145,8 @@ public class MovieFragment extends Fragment {
            menu.findItem(R.id.action_popular).setChecked(true);
         else if(SORT_MOVIES_BY.equals(TOP_RATED_MOVIES))
             menu.findItem(R.id.action_toprated).setChecked(true);
+        else if(SORT_MOVIES_BY.equals(FAVORITE_MOVIES))
+            menu.findItem(R.id.action_favorite).setChecked(true);
 
     }
 
@@ -155,133 +168,68 @@ public class MovieFragment extends Fragment {
             item.setChecked(true);
             return true;
         }
+        if (id == R.id.action_favorite) {
+            SORT_MOVIES_BY = FAVORITE_MOVIES;
+            updateMovies(FAVORITE_MOVIES);
+            item.setChecked(true);
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
-
     // start connection
     private void updateMovies(String sortBy){
-        FetchMovieTask movieTask = new FetchMovieTask();
-        movieTask.execute(sortBy);
-    }
+        if(!sortBy.equals(FAVORITE_MOVIES)){
+            final String BASE_URL = "http://api.themoviedb.org/3/";
+            Gson gson =  new GsonBuilder().create();
+            Retrofit retrofit = new Retrofit.Builder().baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .build();
 
-    //fetch movies task
-    public class FetchMovieTask extends AsyncTask<String, Void, List<Movie>> {
+            movieAPI = retrofit.create(MovieAPI.class);
 
-        private final String LOG_TAG = FetchMovieTask.class.getSimpleName();
+            Call<MovieList> movieListCall = movieAPI.getSortMovies(sortBy);
 
-        private List<Movie> getMoviesDataFromJson(String movieDataStr) throws JSONException{
+            movieListCall.enqueue(new Callback<MovieList>() {
+                @Override
+                public void onResponse(Call<MovieList> call, Response<MovieList> response) {
+                    List<Movie> movieList = response.body().getResults();
 
-            final String OWM_RESULT = "results";
-
-            JSONObject jsonMovieObj = new JSONObject(movieDataStr);
-            JSONArray jsonMovieArr = jsonMovieObj.getJSONArray(OWM_RESULT);
-
-            List<Movie> listMovie = new ArrayList<>();
-            for(int i = 0; i < jsonMovieArr.length(); i++){
-                JSONObject getMovieDesc = jsonMovieArr.getJSONObject(i);
-                Movie parseMovieModel = new Movie(getMovieDesc);
-                listMovie.add(parseMovieModel);
-            }
-
-            return listMovie;
-        }
-
-        @Override
-        protected List<Movie> doInBackground(String... voids) {
-            // These two need to be declared outside the try/catch
-            // so that they can be closed in the finally block.
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            // Will contain the raw JSON response as a string.
-            String movieJsonStr = null;
-
-            try {
-                // Construct the URL for the OpenWeatherMap query
-                // Possible parameters are available at OWM's forecast API page, at
-                // http://openweathermap.org/API#forecast
-                final String BASE_URL = "http://api.themoviedb.org/3/movie";
-
-                Uri builtUri = Uri.parse(BASE_URL).buildUpon()
-                        .appendPath(voids[0])
-                        .appendQueryParameter("api_key", BuildConfig.MOVIEDB_API_KEY)
-                        .build();
-                URL url = new URL(builtUri.toString());
-
-                // Create the request to OpenWeatherMap, and open the connection
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.connect();
-
-                // Read the input stream into a String
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    // Nothing to do.
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
-                    // But it does make debugging a *lot* easier if you print out the completed
-                    // buffer for debugging.
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    // Stream was empty.  No point in parsing.
-                    return null;
-                }
-                movieJsonStr = buffer.toString();
-            }
-
-            catch (IOException e) {
-                // If the code didn't successfully get the weather data, there's no point in attempting
-                // to parse it.
-                return null;
-            }
-
-            finally{
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch (final IOException e) {
+                    if(movieList != null)
+                    {
+                        movieListSaved = new ArrayList<>();
+                        movieListAdapter.clear();
+                        for (Movie movie :  movieList) {
+                            movieListAdapter.add(movie);
+                            movieListSaved.add(movie);
+                        }
                     }
                 }
-            }
 
-            try {
-                return getMoviesDataFromJson(movieJsonStr);
-            }
-            catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
+                @Override
+                public void onFailure(Call<MovieList> call, Throwable t) {
 
-            Log.v(LOG_TAG, movieJsonStr);
-
-            return null;
+                }
+            });
         }
 
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-            super.onPostExecute(movies);
-            if (movies != null) {
-                movieListAdapter.clear();
-                movieListSaved = new ArrayList<>();
-                if (movieListAdapter != null) {
-                    for(Movie movie : movies) {
-                        movieListAdapter.add(movie);
-                        movieListSaved.add(movie); // save movies to restore state
-                    }
-                }
-            }
+        else{
+            SharedPreferences sharedPreferences
+                    = getActivity().getSharedPreferences("FavMovie", Context.MODE_PRIVATE);
 
+            Map<String, ?> allEntries = sharedPreferences.getAll();
+            Gson gson = new Gson();
+
+            movieListSaved = new ArrayList<>();
+            movieListAdapter.clear();
+            String json;
+            Movie movie;
+
+            for (Map.Entry<String, ?> entry : allEntries.entrySet()) {
+                json = entry.getValue().toString();
+                movie = gson.fromJson(json, Movie.class);
+                movieListAdapter.add(movie);
+                movieListSaved.add(movie);
+            }
         }
     }
 }

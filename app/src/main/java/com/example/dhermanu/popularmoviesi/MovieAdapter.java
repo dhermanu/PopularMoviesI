@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 
+import com.example.dhermanu.popularmoviesi.Model.Movie;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class MovieAdapter extends ArrayAdapter {
         }
 
         final Movie movie = (Movie) getItem(position);
-        String image_url = "http://image.tmdb.org/t/p/w185" + movie.getPoster();
+        String image_url = "http://image.tmdb.org/t/p/w185" + movie.getPosterPath();
 
         Picasso
                 .with(context)
