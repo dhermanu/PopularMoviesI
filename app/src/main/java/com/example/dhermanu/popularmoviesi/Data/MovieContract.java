@@ -1,6 +1,7 @@
 package com.example.dhermanu.popularmoviesi.Data;
 
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
@@ -21,5 +22,19 @@ public class MovieContract {
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
         public static final String CONTENT_ITEM_TYPE =
                 ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
+
+        public static final String TABLE_NAME = "movie";
+
+        public static final String COLUMN_ID = "id";
+        public static final String COLUMN_TITLE = "title";
+        public static final String COLUMN_POSTER = "posterPath";
+        public static final String COLUMN_OVERVIEW = "overview";
+        public static final String COLUMN_RELEASE = "releaseDate";
+        public static final String COLUMN_VOTE = "voteAverage";
+        public static final String COLUMN_BACKDROP = "backdropPath";
+
+        public static Uri buildMovie(long id){
+            return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
     }
 }

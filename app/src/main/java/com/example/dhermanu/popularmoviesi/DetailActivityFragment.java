@@ -87,13 +87,18 @@ public class DetailActivityFragment extends Fragment {
         CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) rootView.findViewById(R.id.collapsingtoolbar);
 
         Intent intent  = getActivity().getIntent();
-        Bundle args = getArguments();
+        Bundle args;
 
         if(rootView.findViewById(R.id.nested_view) != null){
+            args = intent.getExtras();
             Toolbar toolbar = (Toolbar) rootView.findViewById(R.id.toolbar);
 
             ((AppCompatActivity) getActivity()).setSupportActionBar(toolbar);
             ((AppCompatActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
+        else{
+            args = getArguments();
         }
 
 

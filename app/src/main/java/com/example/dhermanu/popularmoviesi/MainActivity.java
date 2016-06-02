@@ -89,7 +89,9 @@ public class MainActivity extends AppCompatActivity implements MovieFragment.Cal
 
         else{
             Intent intent = new Intent(this, DetailActivity.class);
-            intent.putExtra(EXTRA_DATA, movie);
+            Bundle extras = new Bundle();
+            extras.putParcelable(EXTRA_DATA, movie);
+            intent.putExtras(extras);
             startActivity(intent);
         }
     }
