@@ -16,6 +16,7 @@
     <dimen name="rating_release_top_margin">45dp</dimen>
 
     <dimen name="grid_image_height_portrait">240dp</dimen>
-    <dimen name="grid_image_height_portrait_tablet">160dp</dimen>
-    <dimen name="grid_image_height_landscape">175dp</dimen>
+    <dimen name="grid_image_height_portrait_tablet">140dp</dimen>
+    <dimen name="grid_image_height_landscape_tablet">100dp</dimen>
+    <dimen name="grid_image_height_landscape">220dp</dimen>
 </resources>

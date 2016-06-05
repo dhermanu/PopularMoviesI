@@ -40,7 +40,9 @@ public class MovieFragment extends Fragment {
 
     private String SORT_MOVIES_BY;
     private MovieAPI movieAPI;
+    private String POSITION_KEY = "Key";
 
+    private int mPosition;
     private Menu optionsMenu;
     private ArrayList<Movie> movieListSaved = null;
 
@@ -80,7 +82,7 @@ public class MovieFragment extends Fragment {
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Movie movieSelected = (Movie) movieListAdapter.getItem(position);
                 ((CallbackTablet)getActivity()).onItemSelected(movieSelected);
-
+                mPosition = position;
             }
         });
 
@@ -91,6 +93,11 @@ public class MovieFragment extends Fragment {
             movieListSaved = savedInstanceState.getParcelableArrayList(SAVED_MOVIES);
             movieListAdapter.addList(movieListSaved); //update movie list
             updateOptionsMenu(); //update the state
+            if(savedInstanceState.containsKey(POSITION_KEY)
+                    && mPosition != GridView.INVALID_POSITION){
+                mPosition = savedInstanceState.getInt(POSITION_KEY);
+                gridView.setSelection(mPosition);
+            }
         }
 
         // execute network operation
@@ -109,6 +116,10 @@ public class MovieFragment extends Fragment {
             //save state and movie lists
             outState.putParcelableArrayList(SAVED_MOVIES,movieListSaved);
             outState.putString(SAVED_STATE, SORT_MOVIES_BY);
+        }
+
+        if(mPosition != GridView.INVALID_POSITION){
+            outState.putInt(POSITION_KEY, mPosition);
         }
     }
 
